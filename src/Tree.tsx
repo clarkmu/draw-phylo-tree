@@ -1,18 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 
-function usePrevious(value) {
-  const ref = useRef();
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  return ref.current;
-}
+const ROOT_STEP = 10;
 
-function createTransform(c, originX, originY, scale, rotate) {
-  const xAxisX = Math.cos(rotate) * scale;
-  const xAxisY = Math.sin(rotate) * scale;
-  c.setTransform(xAxisX, xAxisY, -xAxisY, xAxisX, originX, originY);
-}
+const ONE_RADIAN = Math.PI / 120;
 
 const polarToCartesian = (r, theta) => ({
   x: r * Math.cos(theta),
@@ -24,25 +14,18 @@ const cartesianToPolar = (x, y) => {
   return { distance, radians };
 };
 
-const ROOT_STEP = 10;
-
-export default function Tree({ dim, xy, rotate, strokeStyle, i }) {
+export default function Tree({ dim, strokeStyle, i }) {
   const ref = useRef(null);
   const [init, setInit] = useState(false);
   const [c, setC] = useState<CanvasRenderingContext2D | null>(null);
 
-  // const dim = 200;
+  const baseDistance = i * ROOT_STEP;
+  const baseRotation = (i * 60 * Math.PI) / 180;
 
   const halfDim = Math.floor(dim / 2);
 
-  const previousDim = usePrevious(dim);
-  const previousRotate = usePrevious(rotate);
-
-  // console.log({ dim, halfDim, previousDim });
-
   function animateBranch(x, y, rotate, currY, end) {
     c.beginPath();
-    // createTransform(c, x, y, 1, rotate);
     c.translate(x, y);
     c.rotate(rotate);
     c.moveTo(0, 0);
@@ -50,7 +33,6 @@ export default function Tree({ dim, xy, rotate, strokeStyle, i }) {
     c.lineTo(0, -currY);
     c.strokeStyle = strokeStyle;
     c.stroke();
-    // createTransform(c, -x, -y, 1, -rotate);
     c.rotate(-rotate);
     c.translate(-x, -y);
 
@@ -67,12 +49,14 @@ export default function Tree({ dim, xy, rotate, strokeStyle, i }) {
       }
 
       const { distance, radians } = cartesianToPolar(x, y - end);
-      setTimeout(() => initNode(distance, radians, distance + 20, true), 10);
+      //+30 is the distance to next node
+      setTimeout(() => initNode(distance, radians, distance + 30, true), 10);
 
       const { distance: distance1, radians: radians1 } = cartesianToPolar(
         x,
         y + end
       );
+      //+20 is the distance to next node
       setTimeout(() => initNode(distance1, radians1, distance1 + 20, true), 10);
     }
   }
@@ -105,24 +89,30 @@ export default function Tree({ dim, xy, rotate, strokeStyle, i }) {
     animateNode(x, y, x2, y2, start, radius, recursive);
   }
 
-  function animateRoot(radius, start, end, curr) {
+  function animateRoot(radius, start, end, curr, currStart) {
     c.beginPath();
     c.strokeStyle = strokeStyle;
-    c.arc(0, 0, radius, start, curr);
+    c.arc(0, 0, radius, currStart, curr);
     c.stroke();
 
     if (curr < end) {
       setTimeout(() => {
         requestAnimationFrame(() =>
-          animateRoot(radius, start, end, curr + Math.PI / 120)
+          animateRoot(
+            radius,
+            start,
+            end,
+            curr + ONE_RADIAN,
+            currStart + ONE_RADIAN
+          )
         );
       }, 10);
     } else {
       // node that branches out
-      setTimeout(
-        () => initNode(radius, start, radius + ROOT_STEP * 3, true),
-        10
-      );
+      setTimeout(() => {
+        const firstNodeLength = radius + ROOT_STEP * 5;
+        initNode(radius, start, firstNodeLength, true);
+      }, 10);
 
       //shorter node that connects to other taxa
       setTimeout(() => initNode(radius, end, radius + ROOT_STEP, false), 10);
@@ -130,14 +120,9 @@ export default function Tree({ dim, xy, rotate, strokeStyle, i }) {
   }
 
   function initRoot() {
-    const radius = Math.floor(dim / 10) + xy;
-    animateRoot(radius, 0, Math.PI / 2, 0);
-  }
-
-  function showOrigin() {
-    c.fillRect(0, 0, 5, 5);
-    c.fill();
-    c.stroke();
+    const innerCircleDiameter = Math.floor(dim / 10);
+    const radius = innerCircleDiameter + baseDistance;
+    animateRoot(radius, 0, Math.PI / 2, ONE_RADIAN, 0);
   }
 
   useEffect(() => {
@@ -145,39 +130,9 @@ export default function Tree({ dim, xy, rotate, strokeStyle, i }) {
       return;
     }
 
-    // if (dim === previousDim) {
-    //   return;
-    // }
-
-    // if (!init) {
-    //   setInit(true);
-    //   // c.save();
-    //   createTransform(c, halfDim, halfDim, 1, rotate);
-    //   initRoot();
-    // } else {
-    //   //clear all timeouts
-    //   const highestId = window.setTimeout(() => {
-    //     for (let i = highestId; i >= 0; i--) {
-    //       try {
-    //         window.clearInterval(i);
-    //       } catch (e) {}
-    //     }
-    //   }, 0);
-
-    //   c.clearRect(-previousDim, -previousDim, previousDim * 2, previousDim * 2);
-    //   // c.restore();
-    //   c.resetTransform();
-    //   createTransform(c, halfDim, halfDim, 1, rotate);
-
-    //   initRoot();
-    // }
-
-    // c.resetTransform();
-
     if (!init) {
       setInit(true);
-      // c.translate(halfDim, halfDim);
-      // c.save();
+      c.translate(halfDim, halfDim);
     } else {
       //clear all timeouts
       const highestId = window.setTimeout(() => {
@@ -186,31 +141,15 @@ export default function Tree({ dim, xy, rotate, strokeStyle, i }) {
         }
       }, 0);
 
-      // c.clearRect(-previousDim, -previousDim, previousDim * 2, previousDim * 2);
-      // c.restore();
-      // c.resetTransform();
-      // c.translate(-previousDim / 2, -previousDim / 2);
-
-      // c.setTransform(1, 0, 0, 1, 0, 0);
-      // c.resetTransform();
-
-      // console.log({ previousDim, previousRotate });
-      // c.translate(-previousDim / 2, -previousDim / 2);
-      // c.rotate(-previousRotate);
-      // c.translate()
+      const highestAId = window.requestAnimationFrame(() => {
+        for (let i = highestAId; i >= 0; i--) {
+          window.cancelAnimationFrame(i);
+        }
+      }, 0);
     }
 
-    // c.save();
-    // createTransform(c, halfDim, halfDim, 1, rotate);
-    c.translate(halfDim, halfDim);
-    // c.rotate(rotate);
     initRoot();
-    // showOrigin();
   }, [c, dim]);
-
-  // if (previousRotate && rotate !== previousRotate) {
-  //   console.log({ rotate, previousRotate });
-  // }
 
   useEffect(() => {
     if (!c) setC(ref.current.getContext("2d"));
@@ -223,7 +162,7 @@ export default function Tree({ dim, xy, rotate, strokeStyle, i }) {
       width={dim}
       height={dim}
       style={{
-        transform: `rotate(${(i * 60 * Math.PI) / 180}rad)`,
+        transform: `rotate(${baseRotation}rad)`,
       }}
     />
   );

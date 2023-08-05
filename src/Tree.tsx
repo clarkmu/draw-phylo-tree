@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 
+type Radians = number;
+type Pixels = number;
+
 const ROOT_STEP = 10;
 
 const ONE_RADIAN = Math.PI / 120;
@@ -24,7 +27,9 @@ export default function Tree({ dim, strokeStyle, i }) {
 
   const halfDim = Math.floor(dim / 2);
 
-  function animateBranch(x, y, rotate, currY, end) {
+  //starting at inner node (x,y)
+  //  rotate canvas and draw base of branch while currY < end
+  function animateBranch(x, y, rotate: Radians, currY: Pixels, end: Pixels) {
     c.beginPath();
     c.translate(x, y);
     c.rotate(rotate);
@@ -61,7 +66,16 @@ export default function Tree({ dim, strokeStyle, i }) {
     }
   }
 
-  function animateNode(x, y, x2, y2, start, currR, recursive) {
+  // animate outward line from x,y to x2,y2
+  function animateNode(
+    x,
+    y,
+    x2,
+    y2,
+    start: Pixels,
+    currR: Pixels,
+    recursive: boolean
+  ) {
     const { x: currentX, y: currentY } = polarToCartesian(currR, start);
     setTimeout(() => {
       requestAnimationFrame(() => {
@@ -83,13 +97,21 @@ export default function Tree({ dim, strokeStyle, i }) {
     }, 10);
   }
 
+  //init outward line
   function initNode(radius, start, distance, recursive) {
     const { x, y } = polarToCartesian(radius, start);
     const { x: x2, y: y2 } = polarToCartesian(distance, start);
     animateNode(x, y, x2, y2, start, radius, recursive);
   }
 
-  function animateRoot(radius, start, end, curr, currStart) {
+  //animate arc while curr < end
+  function animateRoot(
+    radius: Pixels,
+    start: Radians,
+    end: Radians,
+    curr: Radians,
+    currStart: Radians
+  ) {
     c.beginPath();
     c.strokeStyle = strokeStyle;
     c.arc(0, 0, radius, currStart, curr);
@@ -119,12 +141,15 @@ export default function Tree({ dim, strokeStyle, i }) {
     }
   }
 
+  //init base arc for root
   function initRoot() {
     const innerCircleDiameter = Math.floor(dim / 10);
     const radius = innerCircleDiameter + baseDistance;
     animateRoot(radius, 0, Math.PI / 2, ONE_RADIAN, 0);
   }
 
+  //init canvas on init
+  //clear timeouts and animationFrames on redraws
   useEffect(() => {
     if (!c) {
       return;
@@ -151,6 +176,7 @@ export default function Tree({ dim, strokeStyle, i }) {
     initRoot();
   }, [c, dim]);
 
+  //init canvas.context
   useEffect(() => {
     if (!c) setC(ref.current.getContext("2d"));
   }, []);

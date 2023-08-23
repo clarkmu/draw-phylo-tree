@@ -9,15 +9,14 @@ import React, {
   useState,
 } from "react";
 
-import type { Radians, Pixels } from "../lib/coords";
-
 import {
+  Radians,
+  Pixels,
   polarToCartesian,
   cartesianToPolar,
   degreesToRadians,
   ONE_RADIAN,
   getArcPoints,
-  getRotatedCoords,
   clearAllClosures,
 } from "../lib/coords";
 
@@ -87,16 +86,20 @@ export default function BranchContextProvider({
   //starting at inner node (x,y)
   //  draw base of branch while currY < end
   function animateBranch(
-    branches,
-    x,
-    y,
+    branches: Branch | null,
+    x: Pixels,
+    y: Pixels,
     rotate: Radians,
     currY: Pixels,
     end: Pixels
   ) {
-    const arcCX = x - branches.branchLength;
+    if (!branches?.branchLength || !c) {
+      return;
+    }
+
+    const arcCX = x - branches?.branchLength;
     c.beginPath();
-    c.arc(arcCX, y, branches.branchLength, -currY, currY);
+    c.arc(arcCX, y, branches?.branchLength, -currY, currY);
     c.strokeStyle = strokeStyle;
     c.stroke();
 
@@ -119,7 +122,7 @@ export default function BranchContextProvider({
         setTimeout(
           () =>
             initNode(
-              branches.nodes[0],
+              (branches?.nodes || [])[0],
               distance,
               radians,
               distance + branches.distance
@@ -142,7 +145,7 @@ export default function BranchContextProvider({
         setTimeout(
           () =>
             initNode(
-              branches.nodes[1],
+              (branches?.nodes || [])[1],
               distance1,
               radians1,
               distance1 + (branches.distanceR || branches.distance)
@@ -154,7 +157,19 @@ export default function BranchContextProvider({
   }
 
   // animate outward line from x,y to x2,y2
-  function animateNode(branches, x, y, x2, y2, start: Pixels, currR: Pixels) {
+  function animateNode(
+    branches: Branch | null,
+    x: Pixels,
+    y: Pixels,
+    x2: Pixels,
+    y2: Pixels,
+    start: Pixels,
+    currR: Pixels
+  ) {
+    if (!c) {
+      return;
+    }
+
     const { x: currentX, y: currentY } = polarToCartesian(currR, start);
     setTimeout(() => {
       requestAnimationFrame(() => {
@@ -177,7 +192,12 @@ export default function BranchContextProvider({
   }
 
   //init outward line
-  function initNode(branches, radius, start, distance) {
+  function initNode(
+    branches: Branch | null,
+    radius: Pixels,
+    start: Radians,
+    distance: Pixels
+  ) {
     const { x, y } = polarToCartesian(radius, start);
     const { x: x2, y: y2 } = polarToCartesian(distance, start);
     animateNode(branches, x, y, x2, y2, start, radius);
@@ -191,6 +211,10 @@ export default function BranchContextProvider({
     curr: Radians,
     currStart: Radians
   ) {
+    if (!c) {
+      return;
+    }
+
     c.beginPath();
     c.strokeStyle = strokeStyle;
     c.arc(0, 0, radius, currStart, curr);
@@ -245,17 +269,20 @@ export default function BranchContextProvider({
           0,
           0,
           0,
-          branches.branchLength
+          branches?.branchLength || 0
         );
       }, 1000);
     }
-  }, [state.c, state.dim]);
+    // eslint-disable-next-line
+  }, [state.c, dim]);
 
   //init canvas.context
   useEffect(() => {
-    if (!state.c) {
-      setState((s) => ({ ...s, c: ref.current.getContext("2d") }));
+    if (!state.c && ref.current) {
+      const curr: HTMLCanvasElement = ref.current;
+      setState((s) => ({ ...s, c: curr.getContext("2d") }));
     }
+    // eslint-disable-next-line
   }, []);
 
   return (

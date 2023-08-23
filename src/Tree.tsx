@@ -1,10 +1,10 @@
 import React from "react";
 import Branch from "./Branch";
 import { branchColors } from "./branching";
-import BranchContextProvider, { BranchContext } from "./context/BranchContext";
-import { useTreeContext } from "./context/TreeContext";
+import BranchContextProvider from "./context/BranchContext";
+import { WithTreeContext, useTreeContext } from "./context/TreeContext";
 
-export default function Tree() {
+function TreeComponent() {
   const {
     state: { dim, displayIndex },
     branches,
@@ -45,3 +45,7 @@ export default function Tree() {
     </div>
   );
 }
+
+const Tree = WithTreeContext(TreeComponent);
+
+export default Tree;

@@ -1,9 +1,11 @@
 {
-  "name": "react-tailwind-typescript",
-  "version": "1.0.0",
-  "description": "",
+  "name": "draw-phylo-tree-mc",
+  "version": "1.0.10",
+  "description": "Tastefully animate a phylogenic tree using HTML Canvas",
   "keywords": [],
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "type": "module",
   "dependencies": {
     "classnames": "2.2.6",
     "react": "16.12.0",
@@ -12,18 +14,45 @@
     "react-scripts": "3.0.1"
   },
   "devDependencies": {
-    "typescript": "3.3.3"
+    "@babel/core": "^7.22.10",
+    "@babel/plugin-transform-react-jsx": "^7.22.5",
+    "@babel/preset-env": "^7.22.10",
+    "@babel/preset-react": "^7.22.5",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-commonjs": "^25.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.1",
+    "@types/react": "^18.2.21",
+    "rollup": "^3.28.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-tailwindcss": "^1.0.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-typescript2": "^0.35.0",
+    "tailwindcss": "^3.3.3",
+    "tslib": "^2.6.2",
+    "typescript": "^5.1.6"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "rollup": "rollup -c"
   },
   "browserslist": [
     ">0.2%",
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clarkmu/draw-phylo-tree.git"
+  },
+  "author": "Michael Clark",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/clarkmu/draw-phylo-tree/issues"
+  },
+  "homepage": "https://github.com/clarkmu/draw-phylo-tree#readme"
 }

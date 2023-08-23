@@ -51,8 +51,13 @@ export default function TreeContextProvider({
   const branches = generateBranches(state.dim / 2);
 
   const calcDim = () => {
-    const w = containerRef.current.offsetWidth;
-    const h = containerRef.current.offsetHeight;
+    if (!containerRef.current) {
+      return;
+    }
+
+    const curr: HTMLDivElement = containerRef.current;
+    const w = curr.offsetWidth;
+    const h = curr.offsetHeight;
     const dim = Math.floor(h < w ? h : w);
     setState((s) => ({ ...s, dim }));
   };
@@ -77,6 +82,7 @@ export default function TreeContextProvider({
     calcDim();
     window.addEventListener("resize", calcDim);
     return () => window.removeEventListener("resize", calcDim);
+    // eslint-disable-next-line
   }, []);
 
   return (
@@ -93,8 +99,8 @@ export default function TreeContextProvider({
   );
 }
 
-export const WithTreeContext = (Component) => {
-  return function WrapperComponent(props) {
+export const WithTreeContext = (Component: any) => {
+  return function WrapperComponent(props: any) {
     return (
       <TreeContextProvider>
         <Component {...props} />
